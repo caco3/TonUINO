@@ -18,7 +18,7 @@
 */
 
 // uncomment the below line to enable five button support
-//#define FIVEBUTTONS
+#define FIVEBUTTONS
 
 static const uint32_t cardCookie = 322417479;
 
@@ -645,6 +645,8 @@ MFRC522::StatusCode status;
 #define buttonFivePin A4
 #endif
 
+#define SpeakerOnPin 8
+
 #define LONG_PRESS 1000
 
 Button pauseButton(buttonPause);
@@ -666,6 +668,7 @@ bool ignoreButtonFive = false;
 
 void setstandbyTimer() {
   Serial.println(F("=== setstandbyTimer()"));
+  digitalWrite(SpeakerOnPin, LOW); // Disconnect Speaker
   if (mySettings.standbyTimer != 0)
     sleepAtMillis = millis() + (mySettings.standbyTimer * 60 * 1000);
   else
@@ -675,15 +678,17 @@ void setstandbyTimer() {
 
 void disablestandbyTimer() {
   Serial.println(F("=== disablestandby()"));
+  digitalWrite(SpeakerOnPin, HIGH); // Connect Speaker
   sleepAtMillis = 0;
 }
 
 void checkStandbyAtMillis() {
   if (sleepAtMillis != 0 && millis() > sleepAtMillis) {
     Serial.println(F("=== power off!"));
+    digitalWrite(SpeakerOnPin, LOW); // Disconnect Speaker
     // enter sleep state
-    digitalWrite(shutdownPin, HIGH);
-    delay(500);
+    digitalWrite(shutdownPin, LOW);
+    while(1);
 
     // http://discourse.voss.earth/t/intenso-s10000-powerbank-automatische-abschaltung-software-only/805
     // powerdown to 27mA (powerbank switches off after 30-60s)
@@ -717,6 +722,9 @@ void setup() {
 
   Serial.begin(115200); // Es gibt ein paar Debug Ausgaben über die serielle Schnittstelle
 
+  pinMode(SpeakerOnPin, OUTPUT);
+  digitalWrite(SpeakerOnPin, LOW); // Disconnect Speaker
+
   // Wert für randomSeed() erzeugen durch das mehrfache Sammeln von rauschenden LSBs eines offenen Analogeingangs
   uint32_t ADC_LSB;
   uint32_t ADCSeed;
@@ -744,6 +752,9 @@ void setup() {
   // activate standby timer
   setstandbyTimer();
 
+  pinMode(shutdownPin, OUTPUT);
+  digitalWrite(shutdownPin, HIGH); // Must be set as early as possible
+
   // DFPlayer Mini initialisieren
   mp3.begin();
   // Zwei Sekunden warten bis der DFPlayer Mini initialisiert ist
@@ -770,8 +781,6 @@ void setup() {
   pinMode(buttonFourPin, INPUT_PULLUP);
   pinMode(buttonFivePin, INPUT_PULLUP);
 #endif
-  pinMode(shutdownPin, OUTPUT);
-  digitalWrite(shutdownPin, LOW);
 
 
   // RESET --- ALLE DREI KNÖPFE BEIM STARTEN GEDRÜCKT HALTEN -> alle EINSTELLUNGEN werden gelöscht
@@ -784,6 +793,7 @@ void setup() {
     loadSettingsFromFlash();
   }
 
+  // digitalWrite(SpeakerOnPin, HIGH); // Connect Speaker
 
   // Start Shortcut "at Startup" - e.g. Welcome Sound
   playShortCut(3);
@@ -1030,6 +1040,10 @@ void loop() {
       ignoreUpButton = false;
     }
 
+    if (pauseButton.pressedFor(LONG_PRESS)) {
+      Serial.println(F("Pause LONG Press"));
+      sleepAtMillis = 1; // Trigger Power Off
+    }
     if (downButton.pressedFor(LONG_PRESS)) {
 #ifndef FIVEBUTTONS
       if (isPlaying()) {
