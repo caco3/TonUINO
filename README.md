@@ -4,6 +4,12 @@ Die DIY Musikbox (nicht nur) für Kinder
 
 # Change Log
 
+## Changes by CacO3
+ - Enabled 5 Buttons Mode
+ - Added pin to connect/disconnect Speaker (To avoid noise on power on/shutdown and while no sound is played)
+ - Inverted ShutdownPin (Controls the transistor)
+ - Long Press on Pause button switches it off
+
 ## Version 2.1 (xx.xx.xxxx) noch WIP
 - Partymodus hat nun eine Queue -> jedes Lied kommt nur genau 1x vorkommt
 - Neue Wiedergabe-Modi "Spezialmodus Von-Bis" - Hörspiel, Album und Party -> erlaubt z.B. verschiedene Alben in einem Ordner zu haben und je mit einer Karte zu verknüpfen
